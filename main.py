@@ -13,27 +13,33 @@ from email.mime.audio import MIMEAudio
 from email.mime.base import MIMEBase
 
 
-def docxreader(filename):
+def docx_reader(filename):
     doc = DocxTemplate(filename)
-    with open("C:\\Users\\Timofei\\Desktop\\csv\\dplogistica.csv", "r", encoding="utf-8") as file:
-        file_data = file.read()
-        lines = file_data.split("\n")
-        for line in lines:
-            fields = line.split(",")
-            email = fields[4]
-            password = fields[5]
-            full_name = fields[0] + " " + fields[1]
-            context = {'email': email, 'password': password}
-            doc.render(context)
-            doc.save("C:\\Users\\Timofei\\Desktop\\word_files/" + full_name + ".docx")
-            convert("C:\\Users\\Timofei\\Desktop\\word_files/" + full_name + ".docx",
-                    "C:\\Users\\Timofei\\Desktop\\pdf_files/" + full_name + ".pdf")
-            os.remove("C:\\Users\\Timofei\\Desktop\\word_files/" + full_name + ".docx")
-            #sendmessage( , "C:\\Users\\Timofei\\Desktop\\pdf_files/" + full_name + ".pdf")
+    with open("C:\\Users\\Timofei\\Desktop\\csv\\Economie_send.csv", "r", encoding="utf-8") as file:
+        with open("C:\\Users\\Timofei\\Desktop\\csv\\Error.txt", "w+",encoding="utf-8") as errorFile:
+            file_data = file.read()
+            lines = file_data.split("\n")
+            for line in lines:
+                fields = line.split(",")
+                email = fields[4]
+                password = fields[5]
+                full_name = fields[0] + " " + fields[1]
+                send_email = fields[6]
+                context = {'email': email, 'password': password}
+                doc.render(context)
+                doc.save("C:\\Users\\Timofei\\Desktop\\word_files/" + full_name + ".docx")
+                convert("C:\\Users\\Timofei\\Desktop\\word_files/" + full_name + ".docx",
+                        "C:\\Users\\Timofei\\Desktop\\pdf_files/" + full_name + ".pdf")
+                os.remove("C:\\Users\\Timofei\\Desktop\\word_files/" + full_name + ".docx")
+                try:
+                    send_message(send_email, "C:\\Users\\Timofei\\Desktop\\pdf_files/" + full_name + ".pdf")
+                    print("successfully sent email to" + send_email + " NP - " + full_name)
+                except:
+                    print("Error sending message to address " + send_email + " NP - " + full_name)
+                    errorFile.write(line + '\n')
 
 
-def sendmessage(email_address, file_address):
-
+def send_message(email_address, file_address):
     password = "Wwq807627"
 
     msg = MIMEMultipart()
@@ -41,8 +47,8 @@ def sendmessage(email_address, file_address):
     msg['To'] = email_address
     msg['Subject'] = "Cont Microsoft 365"
 
-    body = "Текст сообщения"
-    msg.attach(MIMEText(body, 'plain'))
+    # body = "Sample text"
+    # msg.attach(MIMEText(body, 'plain'))
 
     html = """
         <!DOCTYPE html>
@@ -56,45 +62,44 @@ def sendmessage(email_address, file_address):
         </html>"""
     msg.attach(MIMEText(html, 'html', 'utf-8'))
 
-    filepath = file_address  # Имя файла в абсолютном или относительном формате
-    filename = os.path.basename(filepath)  # Только имя файла
+    filepath = file_address
+    filename = os.path.basename(filepath)
 
-    if os.path.isfile(filepath):  # Если файл существует
-        ctype, encoding = mimetypes.guess_type(filepath)  # Определяем тип файла на основе его расширения
-        if ctype is None or encoding is not None:  # Если тип файла не определяется
-            ctype = 'application/octet-stream'  # Будем использовать общий тип
-        maintype, subtype = ctype.split('/', 1)  # Получаем тип и подтип
-        if maintype == 'text':  # Если текстовый файл
-            with open(filepath) as fp:  # Открываем файл для чтения
-                file = MIMEText(fp.read(), _subtype=subtype)  # Используем тип MIMEText
-                fp.close()  # После использования файл обязательно нужно закрыть
-        elif maintype == 'image':  # Если изображение
+    if os.path.isfile(filepath):
+        ctype, encoding = mimetypes.guess_type(filepath)
+        if ctype is None or encoding is not None:
+            ctype = 'application/octet-stream'
+        maintype, subtype = ctype.split('/', 1)
+        if maintype == 'text':
+            with open(filepath) as fp:
+                file = MIMEText(fp.read(), _subtype=subtype)
+                fp.close()
+        elif maintype == 'image':
             with open(filepath, 'rb') as fp:
                 file = MIMEImage(fp.read(), _subtype=subtype)
                 fp.close()
-        elif maintype == 'audio':  # Если аудио
+        elif maintype == 'audio':
             with open(filepath, 'rb') as fp:
                 file = MIMEAudio(fp.read(), _subtype=subtype)
                 fp.close()
-        else:  # Неизвестный тип файла
+        else:
             with open(filepath, 'rb') as fp:
-                file = MIMEBase(maintype, subtype)  # Используем общий MIME-тип
-                file.set_payload(fp.read())  # Добавляем содержимое общего типа (полезную нагрузку)
+                file = MIMEBase(maintype, subtype)
+                file.set_payload(fp.read())
                 fp.close()
-            encoders.encode_base64(file)  # Содержимое должно кодироваться как Base64
-        file.add_header('Content-Disposition', 'attachment', filename=filename)  # Добавляем заголовки
+            encoders.encode_base64(file)
+        file.add_header('Content-Disposition', 'attachment', filename=filename)
         msg.attach(file)
 
     server = smtplib.SMTP(host='smtp.office365.com', port=587)
     server.starttls()
     server.login(msg['From'], password)
     server.sendmail(msg['From'], msg['To'], msg.as_string())
-    print("successfully sent email to %s:" % (msg['To']))
     server.quit()
 
 
 def main():
-    docxreader("shablon.docx")
+    docx_reader("shablon.docx")
 
 
 main()
