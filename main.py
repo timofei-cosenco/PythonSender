@@ -15,8 +15,8 @@ from email.mime.base import MIMEBase
 
 def docx_reader(filename):
     doc = DocxTemplate(filename)
-    with open("C:\\Users\\Timofei\\Desktop\\csv\\Economie_send.csv", "r", encoding="utf-8") as file:
-        with open("C:\\Users\\Timofei\\Desktop\\csv\\Error.txt", "w+",encoding="utf-8") as errorFile:
+    with open("C:\\Users\\Timofei\\Desktop\\csv\\Drept_send.csv", "r", encoding="utf-8") as file:
+        with open("C:\\Users\\Timofei\\Desktop\\csv\\Error.txt", "w+", encoding="utf-8") as errorFile:
             file_data = file.read()
             lines = file_data.split("\n")
             for line in lines:
@@ -33,7 +33,7 @@ def docx_reader(filename):
                 os.remove("C:\\Users\\Timofei\\Desktop\\word_files/" + full_name + ".docx")
                 try:
                     send_message(send_email, "C:\\Users\\Timofei\\Desktop\\pdf_files/" + full_name + ".pdf")
-                    print("successfully sent email to" + send_email + " NP - " + full_name)
+                    print("successfully sent email to - " + send_email + " NP - " + full_name)
                 except:
                     print("Error sending message to address " + send_email + " NP - " + full_name)
                     errorFile.write(line + '\n')
